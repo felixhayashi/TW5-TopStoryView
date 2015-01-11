@@ -68,7 +68,8 @@ module-type: startup
         if(!frames.length) return;
         
         var offsetLeft = frames[0].getBoundingClientRect().left;
-        var target = document.elementFromPoint(offsetLeft, offsetTop);
+        // + 1px as sometimes scroll is not correctly on point
+        var target = document.elementFromPoint(offsetLeft, offsetTop + 1);
         
         if($tw.utils.hasClass(target, config.classNames.tiddlerFrame)) {
           
