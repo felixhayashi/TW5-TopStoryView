@@ -5,6 +5,8 @@ module-type: storyview
 
 Views the story as a linear sequence
 
+@preserve
+
 \*/
 (function(){
 
@@ -21,6 +23,9 @@ var TopStoryView = function(listWidget) {
   this.pageScroller = new $tw.utils.PageScroller();
   this.pageScroller.scrollIntoView = this.scrollIntoView;
   this.pageScroller.storyRiverElement = document.getElementsByClassName("tc-story-river")[0];
+  
+  var tObj = $tw.wiki.getTiddler("$:/config/storyRiver/top/scrollOffset");
+  this.pageScroller.offsetTop = (tObj ? parseInt(tObj.fields.text) : 71); // px
   
 };
 
@@ -45,10 +50,7 @@ TopStoryView.prototype.scrollIntoView = function(element) {
   this.cancelScroll();
   this.startTime = Date.now();
   var scrollPosition = $tw.utils.getScrollPosition();
-  
-  this.offsetTop = this.storyRiverElement.firstElementChild.getBoundingClientRect().top
-                   + $tw.utils.getScrollPosition().y;
-  
+    
   // Get the client bounds of the element and adjust by the scroll position
   var clientBounds = element.getBoundingClientRect(),
     bounds = {
