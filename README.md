@@ -15,7 +15,7 @@ You can use this plugin by importing it and switching your wiki's story view to 
 
 ### It gives you Information on the currently focussed tiddler
 
-Everytime a tiddler's body reaches the defined offset, the value of `$:/temp/focussedTiddler` is updated with the title of the currently focussed tiddler. You can use this information to trigger actions when the user scrolled to a certain tiddler. 
+Everytime a tiddler's body reaches a defined threshold, the value of `$:/temp/focussedTiddler` is updated with the title of the currently focussed tiddler. The threshold can be defined via `$:/config/storyRiver/top/scrollOffset`, where you can set the text to e.g. `100px` (only pixel values are allowed) -- the default is `150px`. You can use this information to trigger actions when the user scrolled to a certain tiddler. 
 
 Here are some ideas how you could use this feature:
 

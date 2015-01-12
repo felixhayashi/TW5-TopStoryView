@@ -22,6 +22,8 @@ module-type: startup
   
   /***************************** CODE ******************************/
 
+
+
   exports.startup = function() {
     
     var config = {
@@ -33,9 +35,8 @@ module-type: startup
       },
       references: {
         // A user may specify which vertical offset defines
-        // the current focus. Note that setting this tiddlers
-        // value also influences the scrolling behavior.
-        offsetTopStore: "$:/config/storyRiver/top/scrollOffset",
+        // the current focus.
+        focusOffsetStore: "$:/config/storyRiver/top/focusOffset",
         // This tiddler holds a reference to the currently focussed
         // tiddler. A tiddler is focussed if it was scrolled to
         // reach the top offset.
@@ -46,51 +47,52 @@ module-type: startup
       // to avoid updates that only result from scroll animations.
       checkbackTime: $tw.utils.getAnimationDuration()
     };
+    
+    var handleScrollEvent = function() {
+      
+      var frames = storyRiverElement.getElementsByClassName(config.classNames.tiddlerFrame);
+      if(!frames.length) return;
+      
+      var offsetLeft = frames[0].getBoundingClientRect().left;
+      // + 1px as sometimes scroll is not correctly on point
+      var target = document.elementFromPoint(offsetLeft, offsetTop + 1);
+      
+      if($tw.utils.hasClass(target, config.classNames.tiddlerFrame)) {
         
+        var title = target.getElementsByClassName(config.classNames.tiddlerTitle)[0];
+        if(title) {
+          title = title.innerHTML.trim();
+          if(title !== curRef && $tw.wiki.getTiddler(title)) { // focus changed
+            curRef = title;
+            $tw.wiki.addTiddler(new $tw.Tiddler({
+              title: config.references.focussedTiddlerStore,
+              text: curRef
+            }));
+          }
+        }
+      }
+      
+      hasActiveTimeout = false;
+      
+    };
+
     var storyRiverElement = document.getElementsByClassName(config.classNames.storyRiver)[0];
     
-    var tObj = $tw.wiki.getTiddler(config.references.offsetTopStore);
-    var offsetTop = (tObj ? parseInt(tObj.fields.text) : 71); // px
+    var tObj = $tw.wiki.getTiddler(config.references.focusOffsetStore);
+    var offsetTop = (tObj ? parseInt(tObj.fields.text) : 150); // px
     
     var curRef = null;
     var hasActiveTimeout = false;
     
     window.addEventListener('scroll', function(event) {
-      
-      if(hasActiveTimeout) return; // 
-      
-      hasActiveTimeout = true;
-      
-      window.setTimeout(function() {
-      
-        var frames = storyRiverElement.getElementsByClassName(config.classNames.tiddlerFrame);
-        
-        if(!frames.length) return;
-        
-        var offsetLeft = frames[0].getBoundingClientRect().left;
-        // + 1px as sometimes scroll is not correctly on point
-        var target = document.elementFromPoint(offsetLeft, offsetTop + 1);
-        
-        if($tw.utils.hasClass(target, config.classNames.tiddlerFrame)) {
-          
-          var title = target.getElementsByClassName(config.classNames.tiddlerTitle)[0];
-          if(title) {
-            title = title.innerHTML.trim();
-            if(title !== curRef && $tw.wiki.getTiddler(title)) { // focus changed
-              curRef = title;
-              $tw.wiki.addTiddler(new $tw.Tiddler({
-                title: config.references.focussedTiddlerStore,
-                text: curRef
-              }));
-            }
-          }
-        }
-        
-        hasActiveTimeout = false;
-        
-      }, 500);
-      
+      if(!hasActiveTimeout) {
+        hasActiveTimeout = true;
+        window.setTimeout(handleScrollEvent, config.checkbackTime);
+      }
     }, false);
+    
+    // simulate a scroll after startup
+    handleScrollEvent();
         
   };
 
