@@ -17,37 +17,17 @@ module-type: startup
   // Export name and synchronous status
   exports.name = "focus_notifier";
   exports.platforms = ["browser"];
-  exports.after = ["rootwidget"];
+  exports.after = ["story"];
   exports.synchronous = true;
   
-  /***************************** CODE ******************************/
-
-
-
   exports.startup = function() {
     
-    var config = {
-      // Essential tiddlywiki classes that we depend on
-      classNames: {
-        tiddlerFrame: "tc-tiddler-frame",
-        storyRiver: "tc-story-river",
-        tiddlerTitle: "tc-title"
-      },
-      references: {
-        // A user may specify which vertical offset defines
-        // the current focus.
-        focusOffsetStore: "$:/config/storyRiver/top/focusOffset",
-        // This tiddler holds a reference to the currently focussed
-        // tiddler. A tiddler is focussed if it was scrolled to
-        // reach the top offset.
-        focussedTiddlerStore: "$:/temp/focussedTiddler"
-      },
-      // Time after a scroll event that has to elapse before we
-      // check which tiddler is actually focussed. This is necessary
-      // to avoid updates that only result from scroll animations.
-      checkbackTime: $tw.utils.getAnimationDuration()
-    };
+  /**************************** IMPORTS ****************************/
+
+    var config = require("$:/plugins/felixhayashi/topstoryview/config.js").config;
     
+  /***************************** CODE ******************************/
+        
     var handleScrollEvent = function() {
       
       var frames = storyRiverElement.getElementsByClassName(config.classNames.tiddlerFrame);
@@ -89,7 +69,7 @@ module-type: startup
         hasActiveTimeout = true;
         window.setTimeout(handleScrollEvent, config.checkbackTime);
       }
-    }, false);
+    }, false);  
     
     // simulate a scroll after startup
     handleScrollEvent();
