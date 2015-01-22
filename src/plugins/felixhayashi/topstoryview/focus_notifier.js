@@ -39,9 +39,9 @@ module-type: startup
       
       if($tw.utils.hasClass(target, config.classNames.tiddlerFrame)) {
         
-        var title = target.getElementsByClassName(config.classNames.tiddlerTitle)[0];
-        if(title) {
-          title = title.innerHTML.trim();
+        var el = target.getElementsByClassName(config.classNames.tiddlerTitle)[0];
+        if(el) {
+          var title = el.innerText || el.textContent;
           if(title !== curRef && $tw.wiki.getTiddler(title)) { // focus changed
             curRef = title;
             $tw.wiki.addTiddler(new $tw.Tiddler({
