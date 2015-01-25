@@ -30,25 +30,37 @@ module-type: startup
         
     var handleScrollEvent = function() {
       
+      //~ console.log("handleScrollEvent called");
+      
       var frames = storyRiverElement.getElementsByClassName(config.classNames.tiddlerFrame);
-      if(!frames.length) return;
       
-      var offsetLeft = frames[0].getBoundingClientRect().left;
-      // + 1px as sometimes scroll is not correctly on point
-      var target = document.elementFromPoint(offsetLeft, offsetTop + 1);
+      if(frames.length) {
       
-      if($tw.utils.hasClass(target, config.classNames.tiddlerFrame)) {
+        //~ console.log("Frames contained in storyriver", frames);
         
-        var el = target.getElementsByClassName(config.classNames.tiddlerTitle)[0];
-        if(el) {
-          var title = el.innerText || el.textContent;
-          title = title.trim();
-          if(title !== curRef && $tw.wiki.getTiddler(title)) { // focus changed
-            curRef = title;
-            $tw.wiki.addTiddler(new $tw.Tiddler({
-              title: config.references.focussedTiddlerStore,
-              text: curRef
-            }));
+        var offsetLeft = frames[0].getBoundingClientRect().left;
+
+        //~ console.log("Trigger offset:", "left", offsetLeft, "top", offsetTop);
+
+        // + 1px as sometimes scroll is not correctly on point
+        var target = document.elementFromPoint(offsetLeft + 1, offsetTop);
+
+        //~ console.log("Focussed target by offset: ", target);
+        
+        if($tw.utils.hasClass(target, config.classNames.tiddlerFrame)) {
+          var el = target.getElementsByClassName(config.classNames.tiddlerTitle)[0];
+          if(el) {
+            var title = el.innerText || el.textContent;
+            title = title.trim();
+            //~ console.log("Title", title);
+            if(title !== curRef && $tw.wiki.getTiddler(title)) { // focus changed
+              //~ console.log("Focus changed");
+              curRef = title;
+              $tw.wiki.addTiddler(new $tw.Tiddler({
+                title: config.references.focussedTiddlerStore,
+                text: curRef
+              }));
+            }
           }
         }
       }

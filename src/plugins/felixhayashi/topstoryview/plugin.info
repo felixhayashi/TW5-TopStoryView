@@ -2,7 +2,7 @@
   "title": "$:/plugins/felixhayashi/topstoryview",
   "description": "Alternative opening and scrolling behavior",
   "author": "Felix Küppers",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "released": "",
   "core-version": ">=5.1.5",
   "source": "https://github.com/felixhayashi/TW5-TopStoryView",
