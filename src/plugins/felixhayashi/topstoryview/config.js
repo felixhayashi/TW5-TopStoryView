@@ -24,6 +24,9 @@ module-type: library
       // contains all tiddlers and some other stuff
       storyRiver: "tc-story-river",
       
+      // back drop element of the sr
+      backDrop: "story-backdrop",
+      
       // wraps a tiddler and contains the title
       tiddlerFrame: "tc-tiddler-frame",
       

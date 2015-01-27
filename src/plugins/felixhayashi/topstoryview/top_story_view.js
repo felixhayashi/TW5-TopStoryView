@@ -29,9 +29,14 @@ Views the story as a linear sequence
     this.pageScroller = new $tw.utils.PageScroller();
     this.pageScroller.scrollIntoView = this.scrollIntoView;
     this.pageScroller.storyRiverElement = document.getElementsByClassName(config.classNames.storyRiver)[0];
+    this.pageScroller.backDropElement = document.getElementsByClassName(config.classNames.backDrop)[0];
     
     var tObj = $tw.wiki.getTiddler(config.references.scrollOffsetStore);
     this.pageScroller.offsetTop = (tObj ? parseInt(tObj.fields.text) : 71); // px
+    
+    this.lastFrame = null;
+    
+    this.handleChange();
     
   };
 
@@ -109,21 +114,98 @@ Views the story as a linear sequence
     }
   }
 
+// shuffle via display none;
+
+  TopStoryView.prototype.handleChange = function(change, targetElement) {
+    
+    // recalculate necessary height
+    var sr = this.pageScroller.storyRiverElement;
+    var frames = sr.getElementsByClassName(config.classNames.tiddlerFrame);
+    var frame = frames[frames.length-1];
+    
+    if(this.lastFrame !== frame) { // another frame became the last frame
+      
+      this.lastFrame = frame;
+      
+      var rect = frame.getBoundingClientRect();
+      var windowHeight = window.innerHeight;
+      
+      if(rect.height < windowHeight) {
+        sr.style["paddingBottom"] = (windowHeight - rect.height) + "px";
+      } else {
+        sr.style["paddingBottom"] = "";
+      }
+    
+    }
+    
+    // simulate a scroll to force the currently focussed tiddler to be updated
+    this.startZeroScroll();
+     
+  };
+
   // Hack to trigger a recheck on the currently focussed tiddler
   TopStoryView.prototype.startZeroScroll = function() {
     var scrPos = $tw.utils.getScrollPosition();
     window.scrollTo(scrPos.x, scrPos.y+1);
     window.scrollTo(scrPos.x, scrPos.y);
   };
-    
+  
+  /**
+   * Function is called on every insert in the story river. An exception
+   * is made by tw at startup: The initial set of tiddlers is added without
+   * calling insert on every tiddler.
+   */
   TopStoryView.prototype.insert = function(widget) {
+
+    var targetElement = widget.findFirstDomNode();
     
-    var targetElement = widget.findFirstDomNode(),
-      duration = $tw.utils.getAnimationDuration();
-    // Abandon if the list entry isn't a DOM element (it might be a text node)
     if(!(targetElement instanceof Element)) {
       return;
     }
+        
+    // put it at the very top; it's ok if sibling is null
+    var sr = this.pageScroller.storyRiverElement;
+    sr.insertBefore(targetElement,
+                    sr.firstElementChild.nextSibling);
+    
+    this.startInsertAnimation(targetElement, function() {
+      this.handleChange("insert", targetElement);
+    }.bind(this));
+    
+  };
+  
+  /**
+   * Function is called on every remove in the story river.
+   */
+  TopStoryView.prototype.remove = function(widget) {
+    
+    var targetElement = widget.findFirstDomNode();
+    
+    if(!(targetElement instanceof Element)) {
+      widget.removeChildDomNodes();
+      return;
+    }
+        
+    this.startRemoveAnimation(widget, targetElement, function() {
+      var isRescroll = (this.lastFrame === targetElement);
+      widget.removeChildDomNodes();
+      this.handleChange("remove", targetElement);
+      
+      if(isRescroll) {
+        this.pageScroller.scrollIntoView(this.lastFrame);
+      }
+      
+    }.bind(this));
+    
+  };
+
+  /**
+   * Animation for when a tiddler is inserted
+   */
+  TopStoryView.prototype.startInsertAnimation = function(targetElement, callback) {
+    
+    var duration = $tw.utils.getAnimationDuration();
+    
     // Get the current height of the tiddler
     var computedStyle = window.getComputedStyle(targetElement),
       currMarginBottom = parseInt(computedStyle.marginBottom,10),
@@ -135,9 +217,8 @@ Views the story as a linear sequence
         {transition: "none"},
         {marginBottom: ""}
       ]);
-      // force a recheck
-      this.startZeroScroll();
-    }.bind(this),duration);
+      callback();
+    },duration);
     // Set up the initial position of the element
     $tw.utils.setStyle(targetElement,[
       {transition: "none"},
@@ -152,24 +233,15 @@ Views the story as a linear sequence
       {marginBottom: currMarginBottom + "px"},
       {opacity: "1.0"}
     ]);
-
   };
+  
+  /**
+   * Animation for when a tiddler is removed
+   */
+  TopStoryView.prototype.startRemoveAnimation = function(widget, targetElement, callback) {
+    
+    var duration = $tw.utils.getAnimationDuration();
 
-    
-  TopStoryView.prototype.remove = function(widget) {
-    
-    var targetElement = widget.findFirstDomNode(),
-      duration = $tw.utils.getAnimationDuration(),
-      removeElement = function() {
-        widget.removeChildDomNodes();
-        // force a recheck
-        this.startZeroScroll();
-      }.bind(this);
-    // Abandon if the list entry isn't a DOM element (it might be a text node)
-    if(!(targetElement instanceof Element)) {
-      removeElement();
-      return;
-    }
     // Get the current height of the tiddler
     var currWidth = targetElement.offsetWidth,
       computedStyle = window.getComputedStyle(targetElement),
@@ -177,7 +249,7 @@ Views the story as a linear sequence
       currMarginTop = parseInt(computedStyle.marginTop,10),
       currHeight = targetElement.offsetHeight + currMarginTop;
     // Remove the dom nodes of the widget at the end of the transition
-    setTimeout(removeElement,duration);
+    setTimeout(callback,duration);
     // Animate the closure
     $tw.utils.setStyle(targetElement,[
       {transition: "none"},
@@ -194,8 +266,6 @@ Views the story as a linear sequence
       {marginBottom: (-currHeight) + "px"},
       {opacity: "0.0"}
     ]);
-    
-
     
   };
 
