@@ -123,7 +123,7 @@ Views the story as a linear sequence
     var frames = sr.getElementsByClassName(config.classNames.tiddlerFrame);
     var frame = frames[frames.length-1];
     
-    if(this.lastFrame !== frame) { // another frame became the last frame
+    if(frame && this.lastFrame !== frame) { // another frame became the last frame
       
       this.lastFrame = frame;
       
