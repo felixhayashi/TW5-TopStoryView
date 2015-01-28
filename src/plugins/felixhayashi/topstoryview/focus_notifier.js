@@ -47,18 +47,16 @@ module-type: startup
 
         //~ console.log("Focussed target by offset: ", target);
         
-        if($tw.utils.hasClass(target, config.classNames.tiddlerFrame)) {
-          var el = target.getElementsByClassName(config.classNames.tiddlerTitle)[0];
-          if(el) {
-            var title = el.innerText || el.textContent;
-            title = title.trim();
-            //~ console.log("Title", title);
-            if(title !== curRef && $tw.wiki.getTiddler(title)) { // focus changed
-              //~ console.log("Focus changed");
-              curRef = title;
-            }
-          }
+        var title = config.fn.extractTitleFromFrame(target,
+                                                    config.classNames.tiddlerFrame,
+                                                    config.classNames.tiddlerTitle);
+        
+        //~ console.log("Title", title);
+        if(title !== curRef && $tw.wiki.getTiddler(title)) { // focus changed
+          //~ console.log("Focus changed");
+          curRef = title;
         }
+        
       } else {
         curRef = "";
       }

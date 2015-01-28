@@ -158,11 +158,17 @@ Views the story as a linear sequence
     if(!(targetElement instanceof Element)) {
       return;
     }
-        
-    // put it at the very top; it's ok if sibling is null
-    var sr = this.pageScroller.storyRiverElement;
-    sr.insertBefore(targetElement,
-                    sr.firstElementChild.nextSibling);
+    var title = config.fn.extractTitleFromFrame(targetElement,
+                                                config.classNames.tiddlerFrame,
+                                                config.classNames.tiddlerTitle);
+    var tObj = $tw.wiki.getTiddler(title);
+    
+    if(tObj && !tObj.isDraft()) {
+      // put it at the very top; it's ok if sibling is null
+      var sr = this.pageScroller.storyRiverElement;
+      sr.insertBefore(targetElement,
+                      sr.firstElementChild.nextSibling);
+    }
     
     this.startInsertAnimation(targetElement, function() {
       this.handleChange("insert", targetElement);
@@ -174,7 +180,7 @@ Views the story as a linear sequence
    * Function is called on every remove in the story river.
    */
   TopStoryView.prototype.remove = function(widget) {
-    
+
     var targetElement = widget.findFirstDomNode();
     
     if(!(targetElement instanceof Element)) {

@@ -57,7 +57,22 @@ module-type: library
     // Time after a scroll event that has to elapse before we
     // check which tiddler is actually focussed. This is necessary
     // to avoid updates that only result from scroll animations.
-    checkbackTime: $tw.utils.getAnimationDuration()
+    checkbackTime: $tw.utils.getAnimationDuration(),
+    
+    fn: {
+      extractTitleFromFrame : function(target, frameClass, titleClass) {
+        
+        if(!(target instanceof Element)) return;
+        if(!$tw.utils.hasClass(target, frameClass)) return;
+      
+        var el = target.getElementsByClassName(titleClass)[0];
+        if(el) {
+          var title = el.innerText || el.textContent;
+          return title.trim();
+        }
+
+      }
+    }
     
   };
 
