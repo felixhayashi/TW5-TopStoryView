@@ -56,18 +56,23 @@ module-type: startup
             if(title !== curRef && $tw.wiki.getTiddler(title)) { // focus changed
               //~ console.log("Focus changed");
               curRef = title;
-              $tw.wiki.addTiddler(new $tw.Tiddler({
-                title: config.references.focussedTiddlerStore,
-                text: curRef
-              }));
             }
           }
         }
+      } else {
+        curRef = "";
       }
+      
+      $tw.wiki.addTiddler(new $tw.Tiddler({
+        title: config.references.focussedTiddlerStore,
+        text: curRef
+      }));
       
       hasActiveTimeout = false;
       
     };
+    
+    
 
     var storyRiverElement = document.getElementsByClassName(config.classNames.storyRiver)[0];
     
@@ -76,6 +81,14 @@ module-type: startup
     
     var curRef = null;
     var hasActiveTimeout = false;
+    
+    $tw.wiki.addEventListener("change", function(changedTiddlers) {
+      
+      if(changedTiddlers[config.references.refreshTrigger]) {
+        handleScrollEvent();
+      }
+      
+    });
     
     window.addEventListener('scroll', function(event) {
       if(!hasActiveTimeout) {

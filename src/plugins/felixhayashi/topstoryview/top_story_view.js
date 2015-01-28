@@ -125,8 +125,6 @@ Views the story as a linear sequence
     
     if(frame && this.lastFrame !== frame) { // another frame became the last frame
       
-      this.lastFrame = frame;
-      
       var rect = frame.getBoundingClientRect();
       var windowHeight = window.innerHeight;
       
@@ -138,16 +136,14 @@ Views the story as a linear sequence
     
     }
     
-    // simulate a scroll to force the currently focussed tiddler to be updated
-    this.startZeroScroll();
+    // set last frame to frame. frame might be null if no frame exists.
+    this.lastFrame = frame;
+    
+    // force a refresh
+    $tw.wiki.addTiddler(new $tw.Tiddler({
+      title: config.references.refreshTrigger
+    }));
      
-  };
-
-  // Hack to trigger a recheck on the currently focussed tiddler
-  TopStoryView.prototype.startZeroScroll = function() {
-    var scrPos = $tw.utils.getScrollPosition();
-    window.scrollTo(scrPos.x, scrPos.y+1);
-    window.scrollTo(scrPos.x, scrPos.y);
   };
   
   /**
@@ -190,8 +186,8 @@ Views the story as a linear sequence
       var isRescroll = (this.lastFrame === targetElement);
       widget.removeChildDomNodes();
       this.handleChange("remove", targetElement);
-      
-      if(isRescroll) {
+            
+      if(isRescroll && this.lastFrame) {
         this.pageScroller.scrollIntoView(this.lastFrame);
       }
       

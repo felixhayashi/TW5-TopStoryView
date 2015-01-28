@@ -47,7 +47,10 @@ module-type: library
       // This tiddler holds a reference to the currently focussed
       // tiddler. A tiddler is focussed if it was scrolled to
       // reach the top offset.
-      focussedTiddlerStore: "$:/temp/focussedTiddler"
+      focussedTiddlerStore: "$:/temp/focussedTiddler",
+      
+      // back drop element of the sr
+      refreshTrigger: "$:/temp/focussedTiddler/refresh"
       
     },
     
