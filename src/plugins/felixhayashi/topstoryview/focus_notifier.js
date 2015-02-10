@@ -55,16 +55,21 @@ module-type: startup
         if(title !== curRef && $tw.wiki.getTiddler(title)) { // focus changed
           //~ console.log("Focus changed");
           curRef = title;
+          $tw.wiki.addTiddler(new $tw.Tiddler({
+            title: config.references.focussedTiddlerStore,
+            text: curRef
+          }));
         }
         
       } else {
-        curRef = "";
+        if(curRef) {
+          curRef = "";
+          $tw.wiki.addTiddler(new $tw.Tiddler({
+            title: config.references.focussedTiddlerStore,
+            text: curRef
+          }));
+        }
       }
-      
-      $tw.wiki.addTiddler(new $tw.Tiddler({
-        title: config.references.focussedTiddlerStore,
-        text: curRef
-      }));
       
       hasActiveTimeout = false;
       
