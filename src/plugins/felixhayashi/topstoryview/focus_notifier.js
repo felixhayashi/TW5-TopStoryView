@@ -43,6 +43,7 @@ module-type: startup
         //~ console.log("Trigger offset:", "left", offsetLeft, "top", offsetTop);
 
         // + 1px as sometimes scroll is not correctly on point
+        // TODO: this does not work if modal is shown!
         var target = document.elementFromPoint(offsetLeft + 1, offsetTop);
 
         //~ console.log("Focussed target by offset: ", target);
@@ -101,6 +102,7 @@ module-type: startup
     }, false);  
     
     // simulate a scroll after startup
+    //~ console.log("auto-triggering a scroll after startup");
     handleScrollEvent();
         
   };

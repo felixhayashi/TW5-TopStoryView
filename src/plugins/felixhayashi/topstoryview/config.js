@@ -49,6 +49,8 @@ module-type: library
       // reach the top offset.
       focussedTiddlerStore: "$:/temp/focussedTiddler",
       
+      navigateToBehaviour: "$:/plugins/felixhayashi/topstoryview/navigateToBehaviour",
+      
       // back drop element of the sr
       refreshTrigger: "$:/temp/focussedTiddler/refresh"
       

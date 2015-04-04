@@ -34,8 +34,12 @@ Views the story as a linear sequence
     var tObj = $tw.wiki.getTiddler(config.references.scrollOffsetStore);
     this.pageScroller.offsetTop = (tObj ? parseInt(tObj.fields.text) : 71); // px
     
+    var tObj = $tw.wiki.getTiddler(config.references.navigateToBehaviour);
+    this.isMoveToTopNavigation = (tObj ? tObj.fields.text === "insert" : false);
+    
     this.lastFrame = null;
     
+    // a first update
     this.handleChange();
     
   };
@@ -43,14 +47,22 @@ Views the story as a linear sequence
   TopStoryView.prototype.navigateTo = function(historyInfo) {
      
     var listElementIndex = this.listWidget.findListItem(0,historyInfo.title);
+    
     if(listElementIndex === undefined) {
       return;
     }
-    var listItemWidget = this.listWidget.children[listElementIndex],
-        targetElement = listItemWidget.findFirstDomNode();
+    
+    var listItemWidget = this.listWidget.children[listElementIndex];
+    var targetElement = listItemWidget.findFirstDomNode();
     
     if(targetElement instanceof Element) {
+      
+      if(this.isMoveToTopNavigation) {                        
+        this.putAtTop(targetElement);
+      }
+      
       this.pageScroller.scrollIntoView(targetElement);
+      
     }
     
   };
@@ -152,27 +164,29 @@ Views the story as a linear sequence
    * calling insert on every tiddler.
    */
   TopStoryView.prototype.insert = function(widget) {
+    
+    return this.insertTarget(widget.findFirstDomNode());
+    
+  };
 
-    var targetElement = widget.findFirstDomNode();
+  TopStoryView.prototype.insertTarget = function(targetElement) {  
     
-    if(!(targetElement instanceof Element)) {
-      return;
-    }
-    var title = config.fn.extractTitleFromFrame(targetElement,
-                                                config.classNames.tiddlerFrame,
-                                                config.classNames.tiddlerTitle);
-    var tObj = $tw.wiki.getTiddler(title);
+    if(!(targetElement instanceof Element)) return;
     
-    if(tObj && !tObj.isDraft()) {
-      // put it at the very top; it's ok if sibling is null
-      var sr = this.pageScroller.storyRiverElement;
-      sr.insertBefore(targetElement,
-                      sr.firstElementChild.nextSibling);
-    }
-    
+    this.putAtTop(targetElement);
+                        
     this.startInsertAnimation(targetElement, function() {
       this.handleChange("insert", targetElement);
     }.bind(this));
+    
+  };
+  
+  TopStoryView.prototype.putAtTop = function(targetElement) {  
+    
+    // put it at the very top; it's ok if sibling is null
+    var sr = this.pageScroller.storyRiverElement;
+    sr.insertBefore(targetElement,
+                    sr.firstElementChild.nextSibling);
     
   };
   
@@ -187,14 +201,27 @@ Views the story as a linear sequence
       widget.removeChildDomNodes();
       return;
     }
-        
+    
+    
     this.startRemoveAnimation(widget, targetElement, function() {
-      var isRescroll = (this.lastFrame === targetElement);
+            
       widget.removeChildDomNodes();
       this.handleChange("remove", targetElement);
-            
-      if(isRescroll && this.lastFrame) {
-        this.pageScroller.scrollIntoView(this.lastFrame);
+      
+      if(this.lastFrame) {
+        
+        // When the last frame in the river equals the target that is removed
+        // we might need to scroll to the tiddler that now became the last tiddler
+        if(this.lastFrame === targetElement) {
+          
+          var tRef = config.fn.extractTitleFromFrame(targetElement,
+                                                config.classNames.tiddlerFrame,
+                                                config.classNames.tiddlerTitle);
+                                                
+          if(!$tw.wiki.findDraft(tRef)) { // not just turned into a draft
+            this.pageScroller.scrollIntoView(this.lastFrame);
+          }
+        }
       }
       
     }.bind(this));
