@@ -1,8 +1,8 @@
 {
   "title": "$:/plugins/felixhayashi/topstoryview",
-  "description": "Alternative opening and scrolling behavior",
+  "description": "TopStoryView - Navigation scrolls tiddlers to the top",
   "author": "Felix Küppers",
-  "version": "0.0.10",
+  "version": "0.1.0",
   "released": "",
   "core-version": ">=5.1.5",
   "source": "https://github.com/felixhayashi/TW5-TopStoryView",

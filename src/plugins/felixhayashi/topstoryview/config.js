@@ -37,19 +37,13 @@ module-type: library
     
     references: {
       
-      // A user may specify which vertical offset defines
-      // the current focus.
-      focusOffsetStore: "$:/config/storyRiver/top/focusOffset",
-      
-      // A user may define until which position to scroll
-      scrollOffsetStore: "$:/config/storyRiver/top/scrollOffset",
-      
+      // User configuration
+      userConfig: "$:/config/topStoryView",
+            
       // This tiddler holds a reference to the currently focussed
       // tiddler. A tiddler is focussed if it was scrolled to
       // reach the top offset.
       focussedTiddlerStore: "$:/temp/focussedTiddler",
-      
-      navigateToBehaviour: "$:/plugins/felixhayashi/topstoryview/navigateToBehaviour",
       
       // back drop element of the sr
       refreshTrigger: "$:/temp/focussedTiddler/refresh"
@@ -59,22 +53,7 @@ module-type: library
     // Time after a scroll event that has to elapse before we
     // check which tiddler is actually focussed. This is necessary
     // to avoid updates that only result from scroll animations.
-    checkbackTime: $tw.utils.getAnimationDuration(),
-    
-    fn: {
-      extractTitleFromFrame : function(target, frameClass, titleClass) {
-        
-        if(!(target instanceof Element)) return;
-        if(!$tw.utils.hasClass(target, frameClass)) return;
-      
-        var el = target.getElementsByClassName(titleClass)[0];
-        if(el) {
-          var title = el.innerText || el.textContent;
-          return title.trim();
-        }
-
-      }
-    }
+    checkbackTime: $tw.utils.getAnimationDuration()
     
   };
 

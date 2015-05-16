@@ -6,20 +6,7 @@ Save and reload the wiki to activate changes.
 
 <table>
   <tr>
-    <th align="left">Focus offset:</th>
-    <td><$edit-text tiddler="$:/config/storyRiver/top/focusOffset" tag="input" default="71px" /></td>
-  </tr>
-  <tr>
     <th align="left">Scroll offset:</th>
-    <td><$edit-text tiddler="$:/config/storyRiver/top/scrollOffset" tag="input" default="150px" /></td>
-  </tr>
-  <tr>
-    <th align="left">Navigation behaviour:</th>
-    <td>
-    <$select tiddler="$:/plugins/felixhayashi/topstoryview/navigateToBehaviour" default="scroll">
-      <option value="scroll">Scroll if possible</option>
-      <option value="insert">Insert at top</option>
-    </$select>
-    </td>
+    <td><$edit-text tiddler="$:/config/topStoryView" field="scroll-offset" tag="input" default="150px" /></td>
   </tr>
 </table>

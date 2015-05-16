@@ -23,52 +23,174 @@ Views the story as a linear sequence
   var easing = "cubic-bezier(0.645, 0.045, 0.355, 1)"; // From http://easings.net/#easeInOutCubic
 
   var TopStoryView = function(listWidget) {
-    
+        
     this.listWidget = listWidget;
-    
+        
     this.pageScroller = new $tw.utils.PageScroller();
     this.pageScroller.scrollIntoView = this.scrollIntoView;
-    this.pageScroller.storyRiverElement = document.getElementsByClassName(config.classNames.storyRiver)[0];
-    this.pageScroller.backDropElement = document.getElementsByClassName(config.classNames.backDrop)[0];
+    this.pageScroller.storyRiverDomNode = document.getElementsByClassName(config.classNames.storyRiver)[0];
     
-    var tObj = $tw.wiki.getTiddler(config.references.scrollOffsetStore);
-    this.pageScroller.offsetTop = (tObj ? parseInt(tObj.fields.text) : 71); // px
+    // load user config
+    var confRef = $tw.wiki.getTiddler(config.references.userConfig);
+    var userConf = (confRef ? confRef.fields : {});
     
-    var tObj = $tw.wiki.getTiddler(config.references.navigateToBehaviour);
-    this.isMoveToTopNavigation = (tObj ? tObj.fields.text === "insert" : false);
+    var scrollOffset = parseInt(userConf["scroll-offset"]);
+    this.pageScroller.scrollOffset = (isNaN(scrollOffset) ? 71 : scrollOffset); // px
+    //~ console.log("tsv:", "scrollOffset", this.pageScroller.scrollOffset);
     
-    this.lastFrame = null;
-    
-    // a first update
-    this.handleChange();
+    this.recalculateBottomSpace();
     
   };
+  
+  /**
+   * This function is called by the list widget that is associated with
+   * the wiki's story view on every refresh before it started to refresh itself
+   */
+  TopStoryView.prototype.refreshStart = function(changedTiddlers,changedAttributes) {
+    // -  
+  };
+  
+  /**
+   * This function is called by the list widget that is associated with
+   * the wiki's story view on every refresh after it refreshed itself
+   */
+  TopStoryView.prototype.refreshEnd = function(changedTiddlers,changedAttributes) {
+    // -
+  };
 
+  /**
+   * This function is called by the list widget that is associated with
+   * the wiki's story view everytime the history changes. In other words,
+   * if the history list tiddler (i.e usually $:/HistoryList) is contained
+   * in the changedTiddlers hashmap, navigateTo will be called. 
+   * 
+   * If a list item has been newly inserted into the list, the `insert()`
+   * method is called first by the widget and `navigateTo()` will be called
+   * subsequently.
+   */ 
   TopStoryView.prototype.navigateTo = function(historyInfo) {
      
-    var listElementIndex = this.listWidget.findListItem(0,historyInfo.title);
+    var listElIndex = this.listWidget.findListItem(0, historyInfo.title);
     
-    if(listElementIndex === undefined) {
+    if(listElIndex === undefined) return;
+      
+    var listItemWidget = this.listWidget.children[listElIndex];
+    var targetElement = listItemWidget.findFirstDomNode();
+    
+    // when should this ever happen? Anyhow...
+    if(!(targetElement instanceof Element)) return;
+            
+    this.pageScroller.scrollIntoView(targetElement);
+    
+  };
+    
+  /**
+   * Function is called when a list item is inserted into the list
+   * widget that is associated with the story river.
+   */
+  TopStoryView.prototype.insert = function(listItemWidget) {
+    
+    if(!listItemWidget) return;
+        
+    var targetElement = listItemWidget.findFirstDomNode();
+    if(!(targetElement instanceof Element)) return;
+                 
+    this.startInsertAnimation(targetElement, function() {
+      // already recalculate (even if not visible yet) so navigateTo will be possible
+      this.recalculateBottomSpace();
+      this.pageScroller.scrollIntoView(targetElement);
+    }.bind(this));
+    
+  };
+  
+  /**
+   * Function is called when an item is removed from the list widget
+   * associated with the story river. At the time `remove()` is called,
+   * the listItemWidget passed as parameter is still contained in
+   * `this.storyList.children`. This means that `this.storyList.children.length`
+   * will always (!) be greater 0.
+   */
+  TopStoryView.prototype.remove = function(listItemWidget) {
+
+    if(!listItemWidget) return;
+    
+    var targetElement = listItemWidget.findFirstDomNode();
+    if(!(targetElement instanceof Element)) {
+      // when would this happen? anyhow...
+      listItemWidget.removeChildDomNodes();
       return;
     }
     
-    var listItemWidget = this.listWidget.children[listElementIndex];
-    var targetElement = listItemWidget.findFirstDomNode();
+    // needs to be calculated before remove animation
+    var isLast = (this.getLastFrame() === targetElement);
     
-    if(targetElement instanceof Element) {
+    this.startRemoveAnimation(listItemWidget, targetElement, function() {
+
+      // since it is not visible anymore, we can already remove the frame
+      listItemWidget.removeChildDomNodes();
       
-      if(this.isMoveToTopNavigation) {                        
-        this.putAtTop(targetElement);
+      // update state
+      this.recalculateBottomSpace();
+      
+      if(isLast) {
+        // focus new last frame
+        //~ console.log("tsv:", "lastframe", this.getLastFrame());
+        this.pageScroller.scrollIntoView(this.getLastFrame());
       }
       
-      this.pageScroller.scrollIntoView(targetElement);
+    }.bind(this));
+    
+  };
+    
+  /**
+   * Returns the last tiddler frame or null if no tiddler is contained
+   * in the river.
+   */
+  TopStoryView.prototype.getLastFrame = function() {
+    
+    var lastItem = this.listWidget.children[this.listWidget.children.length-1];
+    return (lastItem ? lastItem.findFirstDomNode() : null);
+    
+  };
+  
+  /**
+   * Called after insert- or remove-animations finished when the last
+   * tiddler changed. Recalculates the bottom space: In order to be
+   * able to scroll the last frame to the top of the window,
+   * we need to add a padding below.
+   */
+  TopStoryView.prototype.recalculateBottomSpace = function() {
+
+    var sr = this.pageScroller.storyRiverDomNode;
+    
+    if(this.getLastFrame()) {
+
+      var rect = this.getLastFrame().getBoundingClientRect();
+      var windowHeight = window.innerHeight;
+        
+      if(rect.height < windowHeight) {
+        
+        // recalculate style
+        sr.style["paddingBottom"] = (windowHeight - rect.height) + "px";
+                
+        return;
+      }
       
     }
     
+    // in any other case
+    sr.style["paddingBottom"] = "";
+
   };
-
+  
+  /**
+   * Starts an animated scroll to bring the specified element to the top
+   * of the window's viewport.
+   */
   TopStoryView.prototype.scrollIntoView = function(element) {
-
+    
+    if(!element) return;
+    
     var duration = $tw.utils.getAnimationDuration();
     // Now get ready to scroll the body
     this.cancelScroll();
@@ -100,7 +222,7 @@ Views the story as a linear sequence
         }
       },
       endX = getEndPos(bounds.left,bounds.width,scrollPosition.x,window.innerWidth),
-      endY = bounds.top - this.offsetTop;
+      endY = bounds.top - this.scrollOffset;
     // Only scroll if necessary
     if(endX !== scrollPosition.x || endY !== scrollPosition.y) {
       var self = this,
@@ -124,108 +246,6 @@ Views the story as a linear sequence
       };
       drawFrame();
     }
-  }
-
-// shuffle via display none;
-
-  TopStoryView.prototype.handleChange = function(change, targetElement) {
-    
-    // recalculate necessary height
-    var sr = this.pageScroller.storyRiverElement;
-    var frames = sr.getElementsByClassName(config.classNames.tiddlerFrame);
-    var frame = frames[frames.length-1];
-    
-    if(frame && this.lastFrame !== frame) { // another frame became the last frame
-      
-      var rect = frame.getBoundingClientRect();
-      var windowHeight = window.innerHeight;
-      
-      if(rect.height < windowHeight) {
-        sr.style["paddingBottom"] = (windowHeight - rect.height) + "px";
-      } else {
-        sr.style["paddingBottom"] = "";
-      }
-    
-    }
-    
-    // set last frame to frame. frame might be null if no frame exists.
-    this.lastFrame = frame;
-    
-    // force a refresh
-    $tw.wiki.addTiddler(new $tw.Tiddler({
-      title: config.references.refreshTrigger
-    }));
-     
-  };
-  
-  /**
-   * Function is called on every insert in the story river. An exception
-   * is made by tw at startup: The initial set of tiddlers is added without
-   * calling insert on every tiddler.
-   */
-  TopStoryView.prototype.insert = function(widget) {
-    
-    return this.insertTarget(widget.findFirstDomNode());
-    
-  };
-
-  TopStoryView.prototype.insertTarget = function(targetElement) {  
-    
-    if(!(targetElement instanceof Element)) return;
-    
-    this.putAtTop(targetElement);
-                        
-    this.startInsertAnimation(targetElement, function() {
-      this.handleChange("insert", targetElement);
-    }.bind(this));
-    
-  };
-  
-  TopStoryView.prototype.putAtTop = function(targetElement) {  
-    
-    // put it at the very top; it's ok if sibling is null
-    var sr = this.pageScroller.storyRiverElement;
-    sr.insertBefore(targetElement,
-                    sr.firstElementChild.nextSibling);
-    
-  };
-  
-  /**
-   * Function is called on every remove in the story river.
-   */
-  TopStoryView.prototype.remove = function(widget) {
-
-    var targetElement = widget.findFirstDomNode();
-    
-    if(!(targetElement instanceof Element)) {
-      widget.removeChildDomNodes();
-      return;
-    }
-    
-    
-    this.startRemoveAnimation(widget, targetElement, function() {
-            
-      widget.removeChildDomNodes();
-      this.handleChange("remove", targetElement);
-      
-      if(this.lastFrame) {
-        
-        // When the last frame in the river equals the target that is removed
-        // we might need to scroll to the tiddler that now became the last tiddler
-        if(this.lastFrame === targetElement) {
-          
-          var tRef = config.fn.extractTitleFromFrame(targetElement,
-                                                config.classNames.tiddlerFrame,
-                                                config.classNames.tiddlerTitle);
-                                                
-          if(!$tw.wiki.findDraft(tRef)) { // not just turned into a draft
-            this.pageScroller.scrollIntoView(this.lastFrame);
-          }
-        }
-      }
-      
-    }.bind(this));
-    
   };
 
   /**
@@ -267,7 +287,7 @@ Views the story as a linear sequence
   /**
    * Animation for when a tiddler is removed
    */
-  TopStoryView.prototype.startRemoveAnimation = function(widget, targetElement, callback) {
+  TopStoryView.prototype.startRemoveAnimation = function(listItemWidget, targetElement, callback) {
     
     var duration = $tw.utils.getAnimationDuration();
 
@@ -277,7 +297,7 @@ Views the story as a linear sequence
       currMarginBottom = parseInt(computedStyle.marginBottom,10),
       currMarginTop = parseInt(computedStyle.marginTop,10),
       currHeight = targetElement.offsetHeight + currMarginTop;
-    // Remove the dom nodes of the widget at the end of the transition
+    // Remove the dom nodes of the listItemWidget at the end of the transition
     setTimeout(callback,duration);
     // Animate the closure
     $tw.utils.setStyle(targetElement,[
