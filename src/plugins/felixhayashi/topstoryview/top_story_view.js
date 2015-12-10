@@ -21,7 +21,8 @@ Views the story as a linear sequence
   /***************************** CODE ******************************/
 
   var easing = "cubic-bezier(0.645, 0.045, 0.355, 1)"; // From http://easings.net/#easeInOutCubic
-
+  
+  
   var TopStoryView = function(listWidget) {
         
     this.listWidget = listWidget;
@@ -33,6 +34,10 @@ Views the story as a linear sequence
     // load user config
     var confRef = $tw.wiki.getTiddler(config.references.userConfig);
     var userConf = (confRef ? confRef.fields : {});
+    
+    // add hooks
+    $tw.hooks.addHook("th-opening-default-tiddlers-list",
+                      this.hookOpenDefaultTiddlers);
     
     var scrollOffset = parseInt(userConf["scroll-offset"]);
     this.pageScroller.scrollOffset = (isNaN(scrollOffset) ? 71 : scrollOffset); // px
@@ -56,6 +61,15 @@ Views the story as a linear sequence
    */
   TopStoryView.prototype.refreshEnd = function(changedTiddlers,changedAttributes) {
     // -
+  };
+  
+  /**
+   * Hook invoked by TW5 before tm-home is executed.
+   */
+  TopStoryView.prototype.hookOpenDefaultTiddlers = function(storyList) {
+        
+    return storyList;
+    
   };
 
   /**
@@ -87,6 +101,9 @@ Views the story as a linear sequence
   /**
    * Function is called when a list item is inserted into the list
    * widget that is associated with the story river.
+   * 
+   * The insert function does not call `scrollIntoView()` – this 
+   * is done later when TW invokes `navigateTo()`!
    */
   TopStoryView.prototype.insert = function(listItemWidget) {
     
@@ -98,7 +115,6 @@ Views the story as a linear sequence
     this.startInsertAnimation(targetElement, function() {
       // already recalculate (even if not visible yet) so navigateTo will be possible
       this.recalculateBottomSpace();
-      this.pageScroller.scrollIntoView(targetElement);
     }.bind(this));
     
   };
@@ -189,6 +205,10 @@ Views the story as a linear sequence
    */
   TopStoryView.prototype.scrollIntoView = function(element) {
     
+    if(this.preventNextScrollAttempt) {
+      this.preventNextScrollAttempt = false;
+    }
+    
     if(!element) return;
     
     var duration = $tw.utils.getAnimationDuration();
@@ -239,7 +259,9 @@ Views the story as a linear sequence
           t = 1;
         }
         t = $tw.utils.slowInSlowOut(t);
-        window.scrollTo(scrollPosition.x + (endX - scrollPosition.x) * t,scrollPosition.y + (endY - scrollPosition.y) * t);
+        window.scrollTo(scrollPosition.x + (endX - scrollPosition.x) * t,
+                        scrollPosition.y + (endY - scrollPosition.y) * t);
+        
         if(t < 1) {
           self.idRequestFrame = self.requestAnimationFrame.call(window,drawFrame);
         }

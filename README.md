@@ -15,11 +15,11 @@ In this case the plugin will put the tiddler above into focus (unless the story 
 
 ## How it looks like
 
-The [demo site](http://bit.ly/tiddlymap) of TiddlyMap uses this story view.
+The [demo site](http://tiddlymap.org) of TiddlyMap uses this story view.
 
 ## How to install and configure it?
 
-You can use this plugin by importing it (e.g. from the [TiddlyMap demo site](http://bit.ly/tiddlymap)) and switching your wiki's story view to *top* story view.
+You can use this plugin by importing it (e.g. from the [TiddlyMap demo site](http://tiddlymap.org)) and switching your wiki's story view to *top* story view.
 
 ![selection_426](https://cloud.githubusercontent.com/assets/4307137/5669923/f6409ca6-977b-11e4-94ba-134248aa7305.png)
 
